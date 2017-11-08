@@ -16,11 +16,18 @@ hmdb[[4]] <- read.xlsx('Compiled_results.xlsx',
                      sheetIndex = 4)
 hmdb[[5]] <- read.xlsx('Compiled_results.xlsx',
                      sheetIndex = 5)
+for(i in 1:length(hmdb)){
+  df <- hmdb[[i]]
+  df$HMDB.ID <- sapply(df$HMDB.ID,gsub,pattern = "HMDB",
+                      replacement = "HMDB00")
+  hmdb[[i]] <- df
+}
 result<- list()
 result[[1]] <- rampFindPathway(hmdb[[1]])
-result[[2]] <- rampFindPathway(hmdb[[3]])
-result[[3]] <- rampFindPathway(hmdb[[4]])
-result[[4]] <- rampFindPathway(hmdb[[5]])
+result[[2]] <- rampFindPathway(hmdb[[2]])
+result[[3]] <- rampFindPathway(hmdb[[3]])
+result[[4]] <- rampFindPathway(hmdb[[4]])
+result[[5]] <- rampFindPathway(hmdb[[5]])
 
 wb <- createWorkbook()
 sheetName <- c("Treated_DMEM","Untreated_DMEM","Untreated_STDP","Full")
@@ -34,11 +41,11 @@ for(i in 1:4){
 }
 saveWorkbook(wb,"pathways.xlsx")
 
-write.xlsx(result,file = "pathways.xlsx",sheetName = 'Treated_DMEM',row.names = F)
-write.xlsx(result,file = "pathways.xlsx",sheetName = 'Treated_STDP',row.names = F)
-write.xlsx(result,file = "pathways.xlsx",sheetName = 'Untreated_DMEM',row.names = F)
-write.xlsx(result,file = "pathways.xlsx",sheetName = 'Untreated_STDP',row.names = F)
-write.xlsx(result,file = "pathways.xlsx",sheetName = 'Full',row.names = F)
+write.xlsx(result[[1]],file = "dataFromAndy/pathways1.xlsx",sheetName = 'Treated_DMEM',row.names = F)
+write.xlsx(result[[2]],file = "dataFromAndy/pathways2.xlsx",sheetName = 'Treated_STDP',row.names = F)
+write.xlsx(result[[3]],file = "dataFromAndy/pathways3.xlsx",sheetName = 'Untreated_DMEM',row.names = F)
+write.xlsx(result[[4]],file = "dataFromAndy/pathways4.xlsx",sheetName = 'Untreated_STDP',row.names = F)
+write.xlsx(result[[5]],file = "dataFromAndy/pathways5.xlsx",sheetName = 'Full',row.names = F)
 ?write.xlsx
 
 
