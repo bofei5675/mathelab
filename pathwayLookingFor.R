@@ -1,5 +1,5 @@
 library(RMySQL)
-
+load("metabolites_gene_overlap.RData")
 con <- dbConnect(MySQL(),
                  user = 'root',
                  dbname='mathelabramp',
@@ -131,8 +131,8 @@ writeToFile <- function(listOfData,database){
 # In order of HMDB Kegg Wiki Reac
 pathwayid <- c(names(listOfHmdbC),
                names(listOfKeggC),
-               names(listOfReacC),
-               names(listOfWikiC))
+               names(listOfWikiC),
+               names(listOfReacC))
 metabolite_result <- matrix(NA,nrow = length(pathwayid),ncol = length(pathwayid))
 
 # Assign names on the metabolites result
@@ -162,18 +162,21 @@ for(i in 1:length(pathwayid)){
     print(paste("Compute for ",i,",",j))
   }
 }
+### part for plot metabolites matrix
 library(plotly)
 p_metabolites <- plot_ly(z = metabolite_result,
                          x = pathwayid,
                          y = pathwayid,
                          type = "heatmap") %>%
   layout(title = "metabolites overlap",
-         margin = list(l = 10,
-                       r = 10,
-                       t = 10,
-                       b = 10),
+         margin = list(l = 20,
+                       r = 20,
+                       t = 30,
+                       b = 30),
          xaxis = list(
            type = "category",
+           autoticks = FALSE,
+           ticks = "inside",
            showline = FALSE,
            zeroline = FALSE,
            showticklabels = FALSE,
@@ -181,6 +184,7 @@ p_metabolites <- plot_ly(z = metabolite_result,
          ),
          yaxis = list(
            type = "category",
+           ticks = "inside",
            showline = FALSE,
            zeroline = FALSE,
            showticklabels =FALSE,
@@ -193,18 +197,134 @@ p_metabolites <- plot_ly(z = metabolite_result,
                width = 1
              ),
              type = "line",
-             x0 = -0.3,
-             x1 = 1.2
-           )))
+             x0 = 0.3,
+             x1 = 0.3,
+             xref = "paper",
+             y0 = -0.1,
+             y1 = 0.1,
+             yref = "paper"
+           )
+         )
+        ) %>%
+  add_annotations(x = 0.1,
+                  y = -0.1,
+                  text = "hmdb",
+                  showarrow = FALSE,
+                  xref = "paper",
+                  yref = "paper")
 p_metabolites
+# Try to plot single database comparing to all other databases ...
+hmdbToOthers <- metabolite_result[,1:length(listOfHmdbC)]
+pathwayid
+hmdb_fig <- plot_ly(z = hmdbToOthers,
+        x = names(listOfHmdbC),
+        y = pathwayid,
+        type = "heatmap") %>%
+  layout(title = "metabolites overlap",
+         margin = list(l = 100,
+                       r = 20,
+                       t = 50,
+                       b = 60),
+         xaxis = list(
+           type = "category",
+           autoticks = FALSE,
+           ticks = "inside",
+           showline = FALSE,
+           zeroline = FALSE,
+           showticklabels = FALSE,
+           autorange = TRUE
+         ),
+         yaxis = list(
+           type = "category",
+           ticks = "inside",
+           showline = FALSE,
+           zeroline = FALSE,
+           showticklabels =FALSE,
+           autorange = TRUE
+         ),
+         shapes = list(
+           list(
+             line = list(
+               color = "rgba(68,68,68,0.5)",
+               width = 1
+             ),
+             type = "line",
+             x0 = -0.05,
+             x1 = 0,
+             xref = "paper",
+             y0 = 0.42,
+             y1 = 0.42,
+             yref = "paper"
+           ),
+           list(
+             line = list(
+               color = "rgba(68,68,68,0.5)",
+               width = 1
+             ),
+             type = "line",
+             x0 = -0.05,
+             x1 = 0,
+             xref = "paper",
+             y0 = 0.53,
+             y1 = 0.53,
+             yref = "paper"
+           ),
+           list(
+             line = list(
+               color = "rgba(68,68,68,0.5)",
+               width = 1
+             ),
+             type = "line",
+             x0 = -0.05,
+             x1 = 0,
+             xref = "paper",
+             y0 = 0.60,
+             y1 = 0.60,
+             yref = "paper"
+           )
+         )
+  ) %>%
+  add_annotations(x = 0.5,
+                  y = -0.1,
+                  text = "hmdb",
+                  showarrow = FALSE,
+                  xref = "paper",
+                  yref = "paper") %>%
+  add_annotations(x = -0.16,
+                  y = 0.21,
+                  text = "hmdb",
+                  showarrow = FALSE,
+                  xref = "paper",
+                  yref = "paper") %>%
+  add_annotations(x = -0.16,
+                  y = 0.47,
+                  text = "kegg",
+                  showarrow = FALSE,
+                  xref = "paper",
+                  yref = "paper") %>%
+  add_annotations(x = -0.16,
+                  y =  0.58,
+                  text = "wiki",
+                  showarrow = FALSE,
+                  xref = "paper",
+                  yref = "paper") %>%
+  add_annotations(x = -0.16,
+                  y =  0.80,
+                  text = "reac",
+                  showarrow = FALSE,
+                  xref = "paper",
+                  yref = "paper")
+
+hmdb_fig
 # Write csv to a file
 write.csv(metabolite_result,file = "metabolite_overlap.csv",quote = F)
 
 # Output to a matrix
+### Part for genes ...
 pathwayidG <- c(names(listOfHmdbG),
                names(listOfKeggG),
-               names(listOfReacG),
-               names(listOfWikiG))
+               names(listOfWikiG),
+               names(listOfReacG))
 gene_result <- matrix(NA,nrow = length(pathwayidG),ncol = length(pathwayidG))
 # In order of HMDB Kegg Wiki Reac
 # Assign names on the metabolites result
