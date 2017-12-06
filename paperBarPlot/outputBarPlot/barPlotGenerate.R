@@ -1,6 +1,38 @@
 library(plotly)
+# Initilize plot data for each database
+plot.hmdb <- resultHMDB[order(resultHMDB$hmdb,decreasing = T) & resultHMDB$hmdb!=0,]
+plot.kegg <- resultKEGG[order(resultKEGG$kegg,decreasing = T) & resultKEGG$kegg!=0,]
+plot.wiki <- resultWIKI[order(resultWIKI$wiki,decreasing = T) & resultWIKI$wiki!=0,]
+plot.reac <- resultREAC[order(resultREAC$reac,decreasing = T) & resultREAC$reac!=0,]
+# Store them in a list for loop
+plot.data <- list()
+plot.data[[1]] <- plot.hmdb
+plot.data[[2]] <- plot.kegg
+plot.data[[3]] <- plot.wiki
+plot.data[[4]] <- plot.reac
+View(plot.data[[1]])
+# Find synonyms for each database 
+database <- c("hmdb",'kegg','wiki','reac')
+for(i in 1:4){
+  rampId <- as.character(unique(plot.data[[i]]$metabolites))
+  rampId <- sapply(rampId,shQuote)
+  rampId <- paste(rampId,collapse = ",")
+  query <- paste("select * from analytesynonym where rampId in(",rampId,") group by rampId;")
+  synonymdf1 <- dbGetQuery(con,query)
+  plot.data[[i]] <- merge(plot.data[[i]],synonymdf1[,1:2],by.x = "metabolites",by.y="rampId")
+}
+for(i in 1:4){
+  plot.data[[i]] <- plot.data[[i]][order(plot.data[[i]][,i+2],decreasing = T),]
+}
+View(plot.data[[1]])
 
-plot.hmdb <- resultHMDB[order(resultHMDB$totpathways,decreasing = T),]
+# Write to file to see promiscuous metabolites distribution...
+for(i in 1:4){
+  write.csv(plot.data[[i]],
+            file = paste0(database[i],"promiscuous.csv"),
+            row.names = F)
+}
+# Set up height,width, and margins for plot
 m <- list(
   l = 100,
   r = 100,
@@ -9,8 +41,8 @@ m <- list(
 )
 h <- 1000
 w <- 1000
-p_hmdb <- plot_ly(x = 1:length(plot.hmdb$totpathways),
-                  y = plot.hmdb$totpathways,
+p_hmdb <- plot_ly(x = 1:length(plot.data[[1]]$Synonym),
+                  y = plot.data[[1]]$hmdb,
                   type = "bar",
                   height = h,
                   width = w) %>%
@@ -26,7 +58,7 @@ p_hmdb <- plot_ly(x = 1:length(plot.hmdb$totpathways),
            )
          ),
          xaxis = list(
-           title = "Total 2508 unique metabolites have pathways",
+           title = "Total 1258 unique metabolites have pathways from HMDB",
            showticklabels = FALSE,
            font = list(
              size = 24
@@ -34,13 +66,19 @@ p_hmdb <- plot_ly(x = 1:length(plot.hmdb$totpathways),
          ))
 for(i in 1:5){
   df <- plot.data[[1]]
+  ay <- 40
+  if(i == 4){
+    ay <-80
+  } else{
+    ay <- 40
+  }
   p_hmdb <- p_hmdb %>%
     add_annotations(
                   text = df$Synonym[i],
                   x = i,
-                  y = df$totpathways[i],
-                  ax = 20,
-                  ay = 20,
+                  y = df$hmdb[i],
+                  ax = 40,
+                  ay = ay,
                   xanchor = "left",
                   yanchor = "bottom"
   )
@@ -48,9 +86,9 @@ for(i in 1:5){
 
 p_hmdb
 
-plot.kegg <- resultKEGG[order(resultKEGG$totpathways,decreasing = T),]
-p_kegg <- plot_ly(x = 1:length(plot.kegg$totpathways),
-                  y = plot.kegg$totpathways,
+
+p_kegg <- plot_ly(x = 1:length(plot.data[[2]]$Synonym),
+                  y = plot.data[[2]]$kegg,
                   type = "bar",
                   height = h,
                   width = w) %>%
@@ -66,7 +104,7 @@ p_kegg <- plot_ly(x = 1:length(plot.kegg$totpathways),
            )
          ),
          xaxis = list(
-           title = "Total 3115 unique metabolites have pathways",
+           title = "Total 3115 unique metabolites have pathways from KEGG",
            showticklabels = FALSE,
            font = list(
              size = 24
@@ -75,22 +113,31 @@ p_kegg <- plot_ly(x = 1:length(plot.kegg$totpathways),
 
 for(i in 1:5){
   df <- plot.data[[2]]
+  ax <- 20
+  ay <- 20
+  if(i == 2){
+    ax <- 20
+    ay <- -20
+  } else{
+    ax <- 20
+    ay <- 20
+  }
   p_kegg <- p_kegg %>%
     add_annotations(
       text = df$Synonym[i],
       x = i,
-      y = df$totpathways[i],
-      ax = 20,
-      ay = 20,
+      y = df$kegg[i],
+      ax = ax,
+      ay = ay,
       xanchor = "left",
       yanchor = "bottom"
     )
 }
 p_kegg
 
-plot.wiki <- resultWIKI[order(resultWIKI$totpathways,decreasing = T),]
-p_wiki <- plot_ly(x = 1:length(plot.wiki$totpathways),
-                  y = plot.wiki$totpathways,
+
+p_wiki <- plot_ly(x = 1:length(plot.data[[3]]$Synonym),
+                  y = plot.data[[3]]$wiki,
                   type = "bar",
                   height = h,
                   width = w) %>%
@@ -100,13 +147,13 @@ p_wiki <- plot_ly(x = 1:length(plot.wiki$totpathways),
            size = 24
          ),
          yaxis = list(
-           title = "Numbers of pathways metabolites are involved in",
+           title = "Numbers of Wiki pathways that metabolites are involved in",
            font = list(
              size = 24
            )
          ),
          xaxis = list(
-           title = "Total 1236 unique metabolites have pathways",
+           title = "Total 769 unique metabolites have pathways from Wiki",
            showticklabels = FALSE,
            font = list(
              size = 24
@@ -114,13 +161,22 @@ p_wiki <- plot_ly(x = 1:length(plot.wiki$totpathways),
          )) 
 for(i in 1:5){
   df <- plot.data[[3]]
+  ax <- 20
+  ay <- 20
+  if(i %% 2 ==0) {
+    ax <- 20
+    ay <- -20
+  } else {
+    ax <- 20
+    ay <- 20
+  }
   p_wiki <- p_wiki %>%
     add_annotations(
       text = df$Synonym[i],
       x = i,
-      y = df$totpathways[i],
-      ax = 20,
-      ay = 20,
+      y = df$wiki[i],
+      ax = ax,
+      ay = ay,
       xanchor = "left",
       yanchor = "bottom"
     )
@@ -129,9 +185,9 @@ for(i in 1:5){
 
 p_wiki
 
-plot.reac <- resultREAC[order(resultREAC$totpathways,decreasing = T),]
-p_reac <- plot_ly(x = 1:length(plot.reac$totpathways),
-                  y = plot.reac$totpathways,
+plot.data[[4]]$reac
+p_reac <- plot_ly(x = 1:length(plot.data[[4]]$reac),
+                  y = plot.data[[4]]$reac,
                   type = "bar",
                   height = h,
                   width = w) %>%
@@ -147,7 +203,7 @@ p_reac <- plot_ly(x = 1:length(plot.reac$totpathways),
            )
          ),
          xaxis = list(
-           title = "Total 1781 unique metabolites have pathways",
+           title = "Total 1781 unique metabolites have pathways from Reactome",
            showticklabels = FALSE,
            font = list(
              size = 24
@@ -159,7 +215,7 @@ for(i in 1:5){
     add_annotations(
       text = df$Synonym[i],
       x = i,
-      y = df$totpathways[i],
+      y = df$reac[i],
       ax = 20,
       ay = 20,
       xanchor = "left",
@@ -168,6 +224,8 @@ for(i in 1:5){
 }
 
 p_reac
+overall <- subplot(p_hmdb,p_kegg,p_wiki,p_reac,nrows = 1,shareY = T)
+overall
 
 export(p_hmdb,"hmdbMetabolitesPathways.png")
 export(p_kegg,"keggMetabolitesPathways.png")

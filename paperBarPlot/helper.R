@@ -27,7 +27,9 @@ finderPathways3 <- function(dfOfIds){
     pathways <- dfOfIds[dfOfIds$rampId == id,]
     numOfPathway <- vector()
     for(db in pathSource){
-      numOfPathway <- c(numOfPathway,nrow(pathways[pathways$type == db,]))
+      numOfPathway <- c(numOfPathway,nrow(unique(pathways[pathways$type == db,])))
+      # print(pathways[pathways$type == db,])
+      # Sys.sleep(3)
       
     }
     output <- rbind(output,data.frame(
@@ -39,4 +41,15 @@ finderPathways3 <- function(dfOfIds){
     ))
   }
   return(output)
+}
+finderSynonymAndSource <- function(ids,db){
+  ids <- sapply(ids,shQuote)
+  ids <- paste(ids,collapse = ",")
+  query1 <- paste0("select * from analytesynonym where rampId in (",ids,");")
+  query2 <- paste0("select * from source where rampId in (",ids,");")
+  synonym <- dbGetQuery(con,query1)
+  source <- dbGetQuery(con,query2)
+  df <- merge(synonym,source)
+  df <- df[df$IDtype == db,]
+  df <-  unique(df[,c(1,3,4,5)])
 }
