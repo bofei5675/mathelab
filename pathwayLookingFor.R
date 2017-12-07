@@ -3,12 +3,12 @@ library(RMySQL)
 con <- dbConnect(MySQL(),
                  user = 'root',
                  dbname='mathelabramp',
-                 password = 'Ramp340!',
+                 password = 'Ehe131224',
                  host = 'localhost')
 
 pathways<- dbGetQuery(con,'select * from pathway;')
 
-pathway_list <- unique(pathways$pathwayName)
+
 
 dbname <- unique(pathways$type)
 
@@ -33,6 +33,7 @@ n <- 10
 # May need to filter out that pathway that has less than 5 metabolites 
 for(pathid in pathwayInHmdb$pathwayRampId){
   print(pathid)
+  pid <- pathid
   path <- pathwayInHmdb[pathwayInHmdb$pathwayRampId == pathid,]$pathwayName
   pathid <- shQuote(pathid)
   query <- paste0("select * from analytehaspathway where pathwayRampId =",
@@ -42,16 +43,17 @@ for(pathid in pathwayInHmdb$pathwayRampId){
   cid <- df$rampId[grepl("RAMP_C_",df$rampId)]
   gid <- df$rampId[grepl("RAMP_G_",df$rampId)]
   if(length(cid) >n){
-    listOfHmdbC[[pathid]] <- cid
+    listOfHmdbC[[pid]] <- cid
   }
   if(length(gid) >n){
-    listOfHmdbG[[pathid]] <- gid 
+    listOfHmdbG[[pid]] <- gid 
   }
 }
 
 # Find kegg
 for(pathid in pathwayInKegg$pathwayRampId){
   print(pathid)
+  pid <- pathid
   pathid <- shQuote(pathid)
   query <- paste0("select * from analytehaspathway where pathwayRampId =",
                   pathid,
@@ -60,10 +62,10 @@ for(pathid in pathwayInKegg$pathwayRampId){
   cid <- df$rampId[grepl("RAMP_C_",df$rampId)]
   gid <- df$rampId[grepl("RAMP_G_",df$rampId)]
   if(length(cid) > n){
-    listOfKeggC[[pathid]] <- cid
+    listOfKeggC[[pid]] <- cid
   }
   if(length(gid) > n){
-    listOfKeggG[[pathid]] <- gid 
+    listOfKeggG[[pid]] <- gid 
   }
   
 }
@@ -80,16 +82,17 @@ for(pathid in pathwayInWiki$pathwayRampId){
   cid <- df$rampId[grepl("RAMP_C_",df$rampId)]
   gid <- df$rampId[grepl("RAMP_G_",df$rampId)]
   if(length(cid) >n){
-    listOfWikiC[[pathid]] <- cid
+    listOfWikiC[[pid]] <- cid
   }
   if(length(gid) >n){
-    listOfWikiG[[pathid]] <- gid 
+    listOfWikiG[[pid]] <- gid 
   }
 }
 
 # Find reactome
 for(pathid in pathwayInReac$pathwayRampId){
   print(pathid)
+  pid <- pathid
   pathid <- shQuote(pathid)
   query <- paste0("select * from analytehaspathway where pathwayRampId =",
                   pathid,
@@ -98,19 +101,19 @@ for(pathid in pathwayInReac$pathwayRampId){
   cid <- df$rampId[grepl("RAMP_C_",df$rampId)]
   gid <- df$rampId[grepl("RAMP_G_",df$rampId)]
   if(length(cid) >n){
-    listOfReacC[[pathid]] <- cid
+    listOfReacC[[pid]] <- cid
   }
   if(length(gid) >n){
-    listOfReacG[[pathid]] <- gid 
+    listOfReacG[[pid]] <- gid 
   }
 }
 # After finding all pathwayID: Analyte IDs pair 
 # Write them to File 
 # not necessary
-writeToFile(listOfData = listOfHmdb,database = 'hmdb')
-writeToFile(listOfData = listOfKegg,database = 'kegg')
-writeToFile(listOfData = listOfWiki,database = 'wiki')
-writeToFile(listOfData = listOfReac,database = 'reactome')
+# writeToFile(listOfData = listOfHmdb,database = 'hmdb')
+# writeToFile(listOfData = listOfKegg,database = 'kegg')
+# writeToFile(listOfData = listOfWiki,database = 'wiki')
+# writeToFile(listOfData = listOfReac,database = 'reactome')
 # Define function for writing a file
 writeToFile <- function(listOfData,database){
   for(pid in names(listOfData)){
@@ -134,6 +137,8 @@ pathwayid <- c(names(listOfHmdbC),
                names(listOfKeggC),
                names(listOfWikiC),
                names(listOfReacC))
+
+pathwayid <- pathways$sourceId[pathways$pathwayRampId == pathwayid]
 metabolite_result <- matrix(NA,nrow = length(pathwayid),ncol = length(pathwayid))
 
 # Assign names on the metabolites result
@@ -202,17 +207,4 @@ for(i in 1:length(pathwayidG)){
     print(paste("Compute for ",i,",",j))
   }
 }
-
-p_genes <- plot_ly(z = gene_result,
-                   x = pathwayidG,
-                   y = pathwayidG,
-                   type = "heatmap")
-p_genes
-write.csv(gene_result,file = "gene_overlap.csv",quote = F)
-
-
-# Generate data for highcharter 
-metabolite_result <- read.csv("metabolite_overlap.csv",row.names = 1)
-gene_result <- read.csv("gene_overlap.csv",row.names = 1)
-
 
