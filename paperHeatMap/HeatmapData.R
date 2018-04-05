@@ -1,15 +1,15 @@
 library(RMySQL)
 source("helper.R")
-setwd("~/RProject/matheLab/paperHeatMap")
+setwd("~/Documents/Rproject/matheLab/paperHeatMap")
 dbDisconnect(con)
 con <- dbConnect(MySQL(),
                  user = 'root',
                  dbname='mathelabramp',
-                 password = 'Ehe131224',
+                 password = 'Ramp340!',
                  host = 'localhost')
 
 pathways<- dbGetQuery(con,'select * from pathway;')
-
+source <- dbGetQuery(con,'select * from source;')
 
 
 dbname <- unique(pathways$type)

@@ -1,11 +1,11 @@
 library(RMySQL)
 source("helper.R")
-setwd("~/RProject/matheLab/paperHeatMap")
+setwd("~/Documents/RProject/matheLab/paperHeatMap")
 dbDisconnect(con)
 con <- dbConnect(MySQL(),
                  user = 'root',
                  dbname='mathelabramp',
-                 password = 'Ehe131224',
+                 password = 'Ramp340!',
                  host = 'localhost')
 
 pathways<- dbGetQuery(con,'select * from pathway;')
@@ -40,3 +40,6 @@ pathToanalC <- do.call(c,list(#listOfHmdbC,
 metabolite_result <- compute_overlap_matrix(pathwayid = pathwayid,
                                             pathwaysWithAnalytes =  pathToanalC,
                                             methods = 'balanced')
+analyte_result <- metabolite_result
+
+save(analyte_result,file = 'analytes_overlap_matrix.RData')
