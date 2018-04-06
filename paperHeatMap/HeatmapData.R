@@ -9,7 +9,7 @@ con <- dbConnect(MySQL(),
                  host = 'localhost')
 
 pathways<- dbGetQuery(con,'select * from pathway;')
-
+source <- dbGetQuery(con,'select * from source;')
 
 
 dbname <- unique(pathways$type)
