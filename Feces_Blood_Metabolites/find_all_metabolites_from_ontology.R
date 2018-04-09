@@ -2,7 +2,7 @@ library(RMySQL)
 
 con <- dbConnect(MySQL(),
                  username = 'root',
-                 password = 'Ramp340!',
+                 password = 'Ehe131224',
                  dbname = 'mathelabramp')
 
 sql <- paste('select * from ontology;')
@@ -41,11 +41,20 @@ overlap.df <- aggregate(rampid.df$rampCompoundId,by = list(rampid.df$rampOntolog
 overlap.df <- overlap.df[1:2,]
 feces <- overlap.df[1,2][[1]]
 blood <- overlap.df[2,2][[1]]
+
+kegg.id <- sourceid.df[grepl('kegg',sourceid.df$sourceId),]
+library(readr)
+keggBacterialcpd <- read_csv("~/RProject/matheLab/Feces_Blood_Metabolites/keggBacterialcpd.csv", 
+                             col_types = cols(X1 = col_skip()))
+kegg.id1<- unique(kegg.id$sourceId)
+kegg.id1 <- sapply('kegg:',gsub,replacement = '',x = kegg.id1)
+kegg.id2 <- unique(keggBacterialcpd$cpd)
+intersect(kegg.id1,kegg.id2)
 library(VennDiagram)
 dev.new()
-draw.pairwise.venn(area1 = length(unique(feces)),area2 = length(unique(blood)),
-                   cross.area = length(unique(intersect(feces,blood))),
-                   category = c('Feces','Blood'),ext.text = F,
+draw.pairwise.venn(area1 = length(kegg.id1),area2 = length(kegg.id2),
+                   cross.area = length(unique(intersect(kegg.id1,kegg.id2))),
+                   category = c('Human','Microbial'),ext.text = F,
                    col = c('blue','red'),
                    fill = c('blue','red'),
                    margin = c(0.1,0.1,0.1,0.1))
